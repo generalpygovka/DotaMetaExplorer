@@ -1,0 +1,6 @@
+@DotaMetaExplorer_HostAddress = http://localhost:5273
+
+GET {{DotaMetaExplorer_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

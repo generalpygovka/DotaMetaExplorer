@@ -1,0 +1,43 @@
+﻿using DotaMetaExplorer.Context;
+using DotaMetaExplorer.Models;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
+namespace DotaMetaExplorer.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class SubscribeController : ControllerBase
+    {
+        private readonly ApplicationDBContext context;
+        public SubscribeController(ApplicationDBContext context)
+        {
+            this.context = context;
+        }
+
+        [HttpPost("Subscribe")]
+        public async Task<IActionResult> Save(Subscribe subscribe)
+        {
+            context.Subscribes.Add(subscribe);
+            await context.SaveChangesAsync();
+            return Ok(subscribe);
+        }
+
+        [HttpDelete("DeleteSubscribe")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var subscribeToDelete = await context.Subscribes.FirstOrDefaultAsync(x => x.Id == id);
+            context.Subscribes.Remove(subscribeToDelete!);
+            await context.SaveChangesAsync();
+            return Ok(subscribeToDelete);
+        }
+
+        [HttpGet("GetById")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var subscribes = await context.Subscribes.FirstOrDefaultAsync(x => x.Id == id);
+            return Ok(subscribes);
+        }
+    }
+}
