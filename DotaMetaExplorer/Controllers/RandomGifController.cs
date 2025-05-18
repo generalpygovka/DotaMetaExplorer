@@ -23,7 +23,11 @@ namespace DotaMetaExplorer.Controllers
             {
                 response.EnsureSuccessStatusCode();
                 var body = await response.Content.ReadFromJsonAsync<Giphy.RandomGiphy>();
-                return Ok(body);
+                return Ok( new
+                {
+                    title = body?.Data.Title,
+                    url = body?.Data.Images.FixedHeight.Url,
+                });
             }
         }
     }
