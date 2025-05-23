@@ -1,8 +1,4 @@
-﻿namespace DotaMetaExplorer.Models
-{
-    using System.Collections.Generic;
-    using System.Text.Json.Serialization;
-
+﻿using System.Text.Json.Serialization;
     public class PatchList
     {
         [JsonPropertyName("patches")]
@@ -18,4 +14,3 @@
         public string? PatchNumber { get; set; }
     }
 
-}

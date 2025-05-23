@@ -1,5 +1,6 @@
 ﻿using DotaMetaExplorer.Models;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 using System.Text.Json;
 
 namespace DotaMetaExplorer.Controllers;
@@ -8,38 +9,45 @@ namespace DotaMetaExplorer.Controllers;
 [ApiController]
 public class PatchController : ControllerBase
 {
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly string ListUrl = "https://www.dota2.com/datafeed/patchnoteslist?language=Russian";
-    private readonly string NotesUrl = "https://www.dota2.com/datafeed/patchnotes?language=Russian&version={0}";
-
-    public PatchController(IHttpClientFactory httpClientFactory)
+    public static async Task<string> GetLatestVersionAsync()
     {
-        _httpClientFactory = httpClientFactory;
+        var client = new HttpClient();
+        var request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Get,
+            RequestUri = new Uri("https://www.dota2.com/datafeed/patchnoteslist?language=Ukrainian"),
+        };
+        using (var response = await client.SendAsync(request))
+        {
+            response.EnsureSuccessStatusCode();
+            var body = await response.Content.ReadFromJsonAsync<PatchList>();
+            return body!.Patches!.Last().PatchNumber!;
+        }
     }
 
-    private async Task<string> GetLatestVersionAsync()
-    {
-        var client = _httpClientFactory.CreateClient();
-        var json = await client.GetStringAsync(ListUrl);
-        var list = JsonSerializer.Deserialize<PatchList>(json);
-        return list.Patches.Last().PatchNumber;
-    }
-
-    [HttpGet("latest")]
+    [HttpGet("GetLatestPatch")]
     public async Task<IActionResult> Latest()
     {
         var version = await GetLatestVersionAsync();
         return Ok(new { latest_patch = version });
     }
 
-    [HttpGet("latest/notes")]
+    [HttpGet("GetLatestNotes")]
     public async Task<IActionResult> LatestNotes()
     {
+        var client = new HttpClient();
         var version = await GetLatestVersionAsync();
-        var client = _httpClientFactory.CreateClient();
-        var json = await client.GetStringAsync(string.Format(NotesUrl, version));
-        var notes = JsonSerializer.Deserialize<PatchNotesDto>(json);
-        return Ok(notes);
+        var request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Get,
+            RequestUri = new Uri("https://www.dota2.com/datafeed/patchnotes?language=Ukrainian&version=" + version),
+        };
+        using (var response = await client.SendAsync(request))
+        {
+            response.EnsureSuccessStatusCode();
+            var body = await response.Content.ReadFromJsonAsync<PatchNotes>();
+            return Ok(body);
+        }
     }
 
 }

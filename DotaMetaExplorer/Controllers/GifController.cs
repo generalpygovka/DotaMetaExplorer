@@ -1,4 +1,5 @@
 ﻿using DotaMetaExplorer.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
@@ -6,29 +7,23 @@ namespace DotaMetaExplorer.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class MatchController : ControllerBase
+public class GifController : ControllerBase
 {
-    readonly string _address;
-    public MatchController()
+    [HttpGet("GetByTag")]
+    public async Task<IActionResult> GetByTag(string tag)
     {
-        _address = Constants.proMatches;
-    }
-    [HttpGet("GetRecentMatches")]
 
-    public async Task<IActionResult> GetRecentMatches()
-    {
         var client = new HttpClient();
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
-            RequestUri = new Uri(_address),
+            RequestUri = new Uri("https://api.giphy.com/v1/gifs/random?api_key=m5oqHqYo9sv1Wm58U178qUgvNw4GucTD&tag="+ tag + "&rating=g"),
         };
         using (var response = await client.SendAsync(request))
         {
             response.EnsureSuccessStatusCode();
-            var body = await response.Content.ReadFromJsonAsync<List<ProMatches>>();
-            var last10 = body?.Take(10).ToList();
-            return Ok(last10);
+            var body = await response.Content.ReadFromJsonAsync<Giphy.RandomGiphy>();
+            return Ok(body);
         }
     }
 }

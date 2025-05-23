@@ -21,19 +21,13 @@ public class Player
 public class Profile
 {
     [JsonPropertyName("account_id")]
-    public int AccountId { get; set; }
+    public int? AccountId { get; set; }
 
     [JsonPropertyName("personaname")]
     public string? PersonaName { get; set; }
 
     [JsonPropertyName("name")]
     public string? Name { get; set; }
-
-    [JsonPropertyName("plus")]
-    public bool Plus { get; set; }
-
-    [JsonPropertyName("cheese")]
-    public int Cheese { get; set; }
 
     [JsonPropertyName("steamid")]
     public string? SteamId { get; set; }
@@ -51,14 +45,8 @@ public class Profile
     public string? ProfileUrl { get; set; } 
 
     [JsonPropertyName("last_login")]
-    public string? LastLogin { get; set; } 
+    public DateTime? LastLogin { get; set; } 
 
     [JsonPropertyName("loccountrycode")]
     public string? LocCountryCode { get; set; } 
-
-    [JsonPropertyName("is_contributor")]
-    public bool IsContributor { get; set; }
-
-    [JsonPropertyName("is_subscriber")]
-    public bool IsSubscriber { get; set; }
 }

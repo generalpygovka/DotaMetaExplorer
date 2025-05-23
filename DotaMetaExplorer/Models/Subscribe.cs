@@ -1,10 +1,9 @@
-﻿namespace DotaMetaExplorer.Models
+﻿namespace DotaMetaExplorer.Models;
+
+public class Subscribe
 {
-    public class Subscribe
-    {
-        public int Id { get; set; }
-        public int FavouriteHeroId { get; set; }
-        public int ChatId { get; set; }
-        public int FavouriteTeamId { get; set; }
-    }
+    public int Id { get; set; }
+    public int FavouriteHeroId { get; set; }
+    public int ChatId { get; set; }
+    public int FavouriteTeamId { get; set; }
 }
