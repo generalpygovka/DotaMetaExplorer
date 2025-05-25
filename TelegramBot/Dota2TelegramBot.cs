@@ -7,7 +7,7 @@ using Telegram.Bot.Types.ReplyMarkups;
 using System.Net.Http.Json;
 using System.Text;
 using DotaMetaExplorer.Models;
-using Microsoft.Extensions.FileSystemGlobbing;
+using System.Text.Json.Serialization;
 namespace TelegramBot
 {
     public class Dota2TelegramBot
@@ -109,7 +109,7 @@ namespace TelegramBot
 
                 sb.AppendLine($"Останній патч: {patchNotes.PatchName}");
                 sb.AppendLine($"Головні зміни: \n{result}");
-                await botClient.SendMessage(message.Chat.Id, sb.ToString());
+                await botClient.SendMessage(message.Chat.Id, sb.ToString(), parseMode: ParseMode.Markdown);
                 return;
             }
 
@@ -155,16 +155,18 @@ namespace TelegramBot
                 matches = matches.Take(10).ToList();
 
                 var sb = new StringBuilder();
-                sb.AppendLine("Останні матчі:");
+                sb.AppendLine("Останні 10 матчів:");
+                int i = 0;
                 foreach (var match in matches)
                 {
                     sb.AppendLine(new string('-', 20));
+                    sb.AppendLine($"Матч №{i++}");
                     sb.AppendLine($"ID матчу: {match.MatchId}");
                     sb.AppendLine($"Radiant: {match.RadiantName} vs Dire: {match.DireName}");
                     sb.AppendLine($"Переможець: {(match.RadiantWin ? "Radiant" : "Dire")}");
                     sb.AppendLine($"Тривалість: {TimeSpan.FromSeconds(match.Duration).ToString(@"hh\:mm\:ss")}");
                 }
-                await botClient.SendMessage(message.Chat.Id, sb.ToString());
+                await botClient.SendMessage(message.Chat.Id, sb.ToString(), parseMode: ParseMode.Markdown);
                 return;
             }
             if (message.Text == "🏆 Топ-10 гравців")
@@ -190,7 +192,7 @@ namespace TelegramBot
                     sb.AppendLine($"Аккаунт айді: {leaderboards.AccountId}");
                     sb.AppendLine($"Ранг у світовій таблиці: {leaderboards.LeaderboardRank}");
                 }
-                await botClient.SendMessage(message.Chat.Id, sb.ToString());
+                await botClient.SendMessage(message.Chat.Id, sb.ToString(), parseMode: ParseMode.Markdown);
                 return;
             }
             if (message.Text!.StartsWith("/gif"))
@@ -368,7 +370,7 @@ namespace TelegramBot
                     }
                     teams = teams.Take(50).ToList();
                     var sb = new StringBuilder();
-                    sb.AppendLine("Список команд:");
+                    sb.AppendLine("Список перших 50 команд:");
                     foreach (var team in teams)
                     {
                         sb.AppendLine(new string('-', 20));
@@ -384,7 +386,7 @@ namespace TelegramBot
                     for (int i = 0; i < result.Length; i += telegramMessageLimit)
                     {
                         var part = result.Substring(i, Math.Min(telegramMessageLimit, result.Length - i));
-                        await botClient.SendMessage(message.Chat.Id, part);
+                        await botClient.SendMessage(message.Chat.Id, part, parseMode: ParseMode.Markdown);
                     }
                     return;
                 }
@@ -419,7 +421,7 @@ namespace TelegramBot
                     sb.AppendLine($"Перемоги: {team.Wins}");
                     sb.AppendLine($"Поразки: {team.Losses}");
 
-                    await botClient.SendMessage(message.Chat.Id, sb.ToString());
+                    await botClient.SendMessage(message.Chat.Id, sb.ToString(), parseMode: ParseMode.Markdown);
                     return;
                 }
             }
@@ -487,13 +489,12 @@ namespace TelegramBot
                     }
 
                     var sb = new StringBuilder();
-                    sb.AppendLine("Список гравців:");
+                    sb.AppendLine("Список перших 50 гравців:");
                     foreach (ProPlayer player in players)
                     {
                         sb.AppendLine(new string('-', 20));
                         sb.AppendLine($"Нік: {player.Name}");
                         sb.AppendLine($"ID: {player.AccountId}");
-                        sb.AppendLine($"Останній вхід: {player.LastLogin}");
                         sb.AppendLine($"Команда: {player.TeamName}");
                     }
                     const int telegramMessageLimit = 4096;
@@ -536,7 +537,7 @@ namespace TelegramBot
                     sb.AppendLine($"Країна: {players.Profile.LocCountryCode}");
                     sb.AppendLine($"Останній вхід: {players.Profile.LastLogin}");
 
-                    await botClient.SendMessage(message.Chat.Id, sb.ToString());
+                    await botClient.SendPhoto(message.Chat.Id,players.Profile.Avatar!,caption: sb.ToString(), parseMode: ParseMode.Markdown);
                     return;
                 }
             }
@@ -548,6 +549,11 @@ namespace TelegramBot
             public int AccountId { get; set; }
             public int? LeaderboardRank { get; set; }
         }
+        public class LastPatch
+        {
+            [JsonPropertyName("latest_patch")]
+            public string? LatestPatch { get; set; }
+        }
         public async Task CheckForNewPatchAsync()
         {
             while (true)
@@ -557,10 +563,10 @@ namespace TelegramBot
                     var response = await httpClient.GetAsync("api/Patch/GetLatestPatch");
                     if (response.IsSuccessStatusCode)
                     {
-                        var patch = await response.Content.ReadFromJsonAsync<PatchList>();
-                        if (patch != null && patch.Patches!.Last().PatchNumber! != _lastPatchVersion)
+                        var patch = await response.Content.ReadFromJsonAsync<LastPatch>();
+                        if (patch != null && patch.LatestPatch != _lastPatchVersion)
                         {
-                            _lastPatchVersion = patch.Patches!.Last().PatchNumber!;
+                            _lastPatchVersion = patch.LatestPatch;
 
                             var subsResponse = await httpClient.GetAsync("api/Subscribe/GetAll");
                             if (subsResponse.IsSuccessStatusCode)
@@ -569,7 +575,7 @@ namespace TelegramBot
 
                                 foreach (var sub in subscribe!)
                                 {
-                                    await botClient.SendMessage(sub.ChatId, $"Вийшов новий патч: {patch.Patches!.Last().PatchNumber!}!");
+                                    await botClient.SendMessage(sub.ChatId, $"Вийшов новий патч: {patch.LatestPatch}!");
                                 }
                             }
                         }
