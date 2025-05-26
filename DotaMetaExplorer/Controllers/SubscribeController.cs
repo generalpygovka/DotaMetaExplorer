@@ -43,7 +43,7 @@ public class SubscribeController : ControllerBase
     [HttpGet("GetById")]
     public async Task<IActionResult> GetById(int id)
     {
-        var subscribes = await context.Subscribes.FirstOrDefaultAsync(x => x.ChatId == id);
+        var subscribes = await context.Subscribes.Where(x => x.ChatId == id).ToListAsync();
         return Ok(subscribes);
     }
 }

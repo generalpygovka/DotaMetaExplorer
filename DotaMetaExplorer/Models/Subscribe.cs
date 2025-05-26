@@ -6,4 +6,5 @@ public class Subscribe
     public int FavouriteHeroId { get; set; }
     public int ChatId { get; set; }
     public int FavouriteTeamId { get; set; }
+    public bool IsSubscribeForPatch { get; set; }
 }

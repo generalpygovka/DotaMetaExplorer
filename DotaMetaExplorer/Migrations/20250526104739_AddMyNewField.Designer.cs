@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DotaMetaExplorer.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    [Migration("20250508180910_initial")]
-    partial class initial
+    [Migration("20250526104739_AddMyNewField")]
+    partial class AddMyNewField
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -40,6 +40,9 @@ namespace DotaMetaExplorer.Migrations
 
                     b.Property<int>("FavouriteTeamId")
                         .HasColumnType("int");
+
+                    b.Property<bool>("IsSubscribeForPatch")
+                        .HasColumnType("bit");
 
                     b.HasKey("Id");
 
