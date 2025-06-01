@@ -8,4 +8,6 @@ public class ApplicationDBContext : DbContext
     {
     }
     public DbSet<Subscribe> Subscribes { get; set; }
+    public DbSet<PlayerRankCache> PlayerRanksCache { get; set; }
+    public DbSet<RatingCache> RatingCaches { get; set; }
 }

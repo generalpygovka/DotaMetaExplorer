@@ -1,4 +1,5 @@
 using DotaMetaExplorer.Context;
+using DotaMetaExplorer.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +16,7 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
     db.Database.Migrate();
 }
+builder.Services.AddScoped<LeaderboardCacheService>();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

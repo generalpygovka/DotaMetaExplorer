@@ -2,17 +2,17 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# скопировать только проекты
+# пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 COPY DotaMetaExplorer/DotaMetaExplorer.csproj DotaMetaExplorer/
 COPY TelegramBot/TelegramBot.csproj TelegramBot/
 
-# восстановить пакеты только для бота (он подтянет DotaMetaExplorer по ссылке)
+# пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ (пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ DotaMetaExplorer пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ)
 RUN dotnet restore TelegramBot/TelegramBot.csproj
 
-# скопировать всё
+# пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ
 COPY . .
 
-# опубликовать именно проект бота
+# пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
 WORKDIR /src/TelegramBot
 RUN dotnet publish -c Release -o /app/publish
 
