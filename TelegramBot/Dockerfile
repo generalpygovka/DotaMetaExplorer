@@ -2,17 +2,13 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# ����������� ������ �������
 COPY DotaMetaExplorer/DotaMetaExplorer.csproj DotaMetaExplorer/
 COPY TelegramBot/TelegramBot.csproj TelegramBot/
 
-# ������������ ������ ������ ��� ���� (�� �������� DotaMetaExplorer �� ������)
 RUN dotnet restore TelegramBot/TelegramBot.csproj
 
-# ����������� ��
 COPY . .
 
-# ������������ ������ ������ ����
 WORKDIR /src/TelegramBot
 RUN dotnet publish -c Release -o /app/publish
 

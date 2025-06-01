@@ -2,12 +2,14 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using DotaMetaExplorer.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 var host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((context, services) =>
     {
         // Додаємо всі потрібні сервіси, наприклад:
-        services.AddDbContext<DotaMetaExplorer.Context.ApplicationDBContext>();
+        services.AddDbContext<DotaMetaExplorer.Context.ApplicationDBContext>(options =>options.UseSqlServer(context.Configuration.GetConnectionString("DefaultConnection")));
         services.AddScoped<LeaderboardCacheService>();
         services.AddScoped<Dota2TelegramBot>();
     })

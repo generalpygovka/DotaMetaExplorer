@@ -1,22 +1,17 @@
 # WebApi/Dockerfile (.NET 8)
-# 1) �����
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# ������� csproj �� ���������� ������
 COPY *.csproj .
 RUN dotnet restore
 
-# ������� ���� ��� � ��������
 COPY . .
 RUN dotnet publish -c Release -o /app/publish
 
-# 2) �������
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 COPY --from=build /app/publish .
 
-# ��������� ����
 EXPOSE 80
 
 ENTRYPOINT ["dotnet", "DotaMetaExplorer.dll"]

@@ -7,13 +7,11 @@ namespace DotaMetaExplorer.Services;
 public class LeaderboardCacheService
 {
     private readonly ApplicationDBContext _context;
-    private readonly string _adress;
     
 
     public LeaderboardCacheService(ApplicationDBContext context)
     {
         _context = context;
-        _adress = Constants.proPlayers;
     }
 
     public async Task<bool> IsCacheActualAsync(TimeSpan cacheLifetime)
