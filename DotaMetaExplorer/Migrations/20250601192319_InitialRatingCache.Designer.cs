@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DotaMetaExplorer.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    [Migration("20250601185645_InitialRatingCache")]
+    [Migration("20250601192319_InitialRatingCache")]
     partial class InitialRatingCache
     {
         /// <inheritdoc />

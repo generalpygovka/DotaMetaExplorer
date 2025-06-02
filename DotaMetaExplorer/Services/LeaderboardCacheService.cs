@@ -1,57 +1,71 @@
 ﻿using DotaMetaExplorer.Context;
 using DotaMetaExplorer.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using System.Net.Http.Json;
 
 namespace DotaMetaExplorer.Services;
-public class LeaderboardCacheService
+
+public class LeaderboardCacheService : BackgroundService
 {
-    private readonly ApplicationDBContext _context;
-    
+    private readonly IServiceScopeFactory _scopeFactory;
 
-    public LeaderboardCacheService(ApplicationDBContext context)
+    public LeaderboardCacheService(IServiceScopeFactory scopeFactory)
     {
-        _context = context;
+        _scopeFactory = scopeFactory;
     }
 
-    public async Task<bool> IsCacheActualAsync(TimeSpan cacheLifetime)
+    // Основной цикл фонового сервиса
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var cache = await _context.RatingCaches.FirstOrDefaultAsync();
-        if (cache == null) return false;
-        return (DateTime.UtcNow - cache.LastCacheDateTime) < cacheLifetime;
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            await Task.Delay(TimeSpan.FromHours(24), stoppingToken);
+            await UpdateLeaderboardCacheAsync();
+        }
     }
 
+    // Обновление кэша рейтинга
     public async Task UpdateLeaderboardCacheAsync()
     {
+        using var scope = _scopeFactory.CreateScope();
+        var _context = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
+
         var client = new HttpClient();
         var proPlayers = await client.GetFromJsonAsync<List<ProPlayer>>(Constants.proPlayers);
 
         var leaderboard = new List<PlayerRankCache>();
 
-        foreach (var proPlayer in proPlayers!)
+        if (proPlayers != null)
         {
-            if (proPlayer.AccountId == null)
-                continue;
-
-            var playerResponse = await client.GetAsync($"https://api.opendota.com/api/players/{proPlayer.AccountId}");
-            if (!playerResponse.IsSuccessStatusCode)
-                continue;
-
-            var player = await playerResponse.Content.ReadFromJsonAsync<Player>();
-            if (player?.LeaderboardRank == null)
-                continue;
-
-            leaderboard.Add(new PlayerRankCache
+            foreach (var proPlayer in proPlayers)
             {
-                AccountId = proPlayer.AccountId.Value,
-                PersonaName = proPlayer.PersonaName ?? "",
-                Rank = player.LeaderboardRank.Value
-            });
+                if (proPlayer.AccountId == null)
+                    continue;
+
+                var playerResponse = await client.GetAsync($"https://api.opendota.com/api/players/{proPlayer.AccountId}");
+                if (!playerResponse.IsSuccessStatusCode)
+                    continue;
+
+                var player = await playerResponse.Content.ReadFromJsonAsync<Player>();
+                if (player?.LeaderboardRank == null)
+                    continue;
+
+                leaderboard.Add(new PlayerRankCache
+                {
+                    AccountId = proPlayer.AccountId.Value,
+                    PersonaName = proPlayer.PersonaName ?? "",
+                    Rank = player.LeaderboardRank.Value
+                });
+            }
         }
 
+        // Обновление таблицы рейтинга
         _context.PlayerRanksCache.RemoveRange(_context.PlayerRanksCache);
         await _context.PlayerRanksCache.AddRangeAsync(leaderboard.OrderBy(x => x.Rank).Take(10));
 
+        // Обновление времени кэша
         var cache = await _context.RatingCaches.FirstOrDefaultAsync();
         if (cache == null)
         {

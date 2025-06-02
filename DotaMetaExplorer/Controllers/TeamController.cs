@@ -14,7 +14,7 @@ public class TeamController : ControllerBase
     }
 
     [HttpGet("GetTeamByName")]
-    public async Task<IActionResult> GetTeam(string name)
+    public async Task<IActionResult> GetTeamByName(string name)
     {
         var client = new HttpClient();
         var request = new HttpRequestMessage
@@ -27,6 +27,23 @@ public class TeamController : ControllerBase
             response.EnsureSuccessStatusCode();
             var body = await response.Content.ReadFromJsonAsync<List<Team>>();
             return Ok(body?.FirstOrDefault(x =>x.Name.Equals(name, StringComparison.OrdinalIgnoreCase)));
+        }
+    }
+
+    [HttpGet("GetTeamById")]
+    public async Task<IActionResult> GetTeamById(int id)
+    {
+        var client = new HttpClient();
+        var request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Get,
+            RequestUri = new Uri($"https://api.opendota.com/api/teams/{id}"),
+        };
+        using (var response = await client.SendAsync(request))
+        {
+            response.EnsureSuccessStatusCode();
+            var body = await response.Content.ReadFromJsonAsync<Team>();
+            return Ok(body);
         }
     }
 

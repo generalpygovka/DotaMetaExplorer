@@ -14,7 +14,7 @@ public class HeroController : ControllerBase
         _address = Constants.heroesAddress;
     }
 
-    [HttpGet("GetByName")]
+    [HttpGet("GetHeroByName")]
     
     public async Task<IActionResult> GetByName(string name)
     {
@@ -50,7 +50,7 @@ public class HeroController : ControllerBase
         }
     }
 
-    [HttpGet("GetByIdHero")]
+    [HttpGet("GetHeroById")]
     public async Task<IActionResult> GetByIdHero(int id)
     {
         var client = new HttpClient();

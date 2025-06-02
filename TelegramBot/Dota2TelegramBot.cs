@@ -8,22 +8,11 @@ using System.Net.Http.Json;
 using System.Text;
 using DotaMetaExplorer.Models;
 using System.Text.Json.Serialization;
-using DotaMetaExplorer.Context;
-using DotaMetaExplorer.Services;
-using Microsoft.EntityFrameworkCore;
 
 namespace TelegramBot
 {
     public class Dota2TelegramBot
     {
-        private readonly LeaderboardCacheService _leaderboardCacheService;
-        private readonly ApplicationDBContext _dbContext;
-
-        public Dota2TelegramBot(LeaderboardCacheService leaderboardCacheService, ApplicationDBContext dbContext)
-        {
-            _leaderboardCacheService = leaderboardCacheService;
-            _dbContext = dbContext;
-        }
         private readonly HttpClient _httpClient = new HttpClient() { BaseAddress = new Uri("https://localhost:7030/") };
         private readonly TelegramBotClient _botClient = new("7247243723:AAFs8m30615JIbYOse1fOW-hMEQhZfbU2Ok");
         private readonly CancellationToken _cancellationToken = new();
@@ -63,29 +52,31 @@ namespace TelegramBot
             switch (message.Text)
             {
                 case "/start":
+                    await MainMenu(message.Chat.Id);
+                    break;
                 case "Повернутись назад":
-                    await SendMainMenu(message.Chat.Id);
+                    await MainMenu(message.Chat.Id);
                     break;
                 case "🦸 Герої":
-                    await _botClient.SendMessage(message.Chat.Id, "Введіть ім'я героя або його ID, наприклад: /hero axe або /hero 1, або список усіх героїв: /heroes");
+                    await _botClient.SendMessage(message.Chat.Id, "Введіть ID героя або його назву, але ім'я вводити тільки англійською, наприклад: \n/hero axe, \n /hero 1, \nабо список усіх героїв: /heroes");
                     break;
                 case "🧑‍💻 Гравці":
                     await _botClient.SendMessage(message.Chat.Id, "Введіть ID гравця /player <id> або використайте команду /players для списку.");
                     break;
                 case "🏆 Команди":
-                    await _botClient.SendMessage(message.Chat.Id, "Введіть назву команди /team <name> або використайте команду /teams для списку.");
+                    await _botClient.SendMessage(message.Chat.Id, "Введіть ID команди або її назву, наприклад: \n/team Thunder Predator, \n /team 9080405, \nабо список усіх команд: /teams\"");
                     break;
                 case "📝 Останній патч":
                     await HandleLatestPatch(message.Chat.Id);
                     break;
                 case "🔔 Підписки":
-                    await SendSubscriptionMenu(message.Chat.Id);
+                    await SubscribeMenu(message.Chat.Id);
                     break;
                 case "➕ Додати підписку":
-                    await _botClient.SendMessage(message.Chat.Id, "Щоб підписатися на оновлення, використайте команду /subscribe <id героя> <id команди>. Якщо хочете підписатись на оновлення нового патчу, використайте /subscribe <id героя> <id команди> <true>");
+                    await _botClient.SendMessage(message.Chat.Id, "Щоб підписатися на оновлення, використайте команду /subscribe <id героя> <id команди>. \nЯкщо хочете підписатись на оновлення нового патчу, використайте /subscribe <id героя> <id команди> <true>");
                     break;
                 case "🎬 GIF":
-                    await _botClient.SendMessage(message.Chat.Id, "Введіть /gif <тег>, щоб знайти гіфку за темою. Наприклад: /gif dota2");
+                    await _botClient.SendMessage(message.Chat.Id, "Введіть /gif <тег>, щоб знайти гіфку за темою, але обов'язково пишіть англійською мовою, \nнаприклад: /gif dota2");
                     break;
                 case "🎲 Випадковий Герой":
                     await HandleRandomHero(message.Chat.Id);
@@ -97,10 +88,16 @@ namespace TelegramBot
                     await HandleTopPlayers(message.Chat.Id);
                     break;
                 case "📋 Показати підписку":
-                    await HandleShowSubscriptions(message.Chat.Id);
+                    await HandleShowSubscribe(message.Chat.Id);
                     break;
                 case "🗑️ Видалити останню підписку":
-                    await HandleDeleteLastSubscription(message.Chat.Id);
+                    await HandleDeleteLastSubscribe(message.Chat.Id);
+                    break;
+                case "⭐ Улюблені герої":
+                    await HandleFavouriteHeroes(message.Chat.Id);
+                    break;
+                case "⭐ Улюблені команди":
+                    await HandleFavouriteTeams(message.Chat.Id);
                     break;
                 default:
                     await HandleCustomCommands(message);
@@ -112,32 +109,32 @@ namespace TelegramBot
         {
             if (message.Text!.StartsWith("/gif"))
             {
-                await HandleGifCommand(message);
+                await HandleGif(message);
                 return;
             }
             if (message.Text.StartsWith("/subscribe"))
             {
-                await HandleSubscribeCommand(message);
+                await HandleCreateSubscribe(message);
                 return;
             }
             if (message.Text.StartsWith("/team"))
             {
-                await HandleTeamCommand(message);
+                await HandleTeam(message);
                 return;
             }
             if (message.Text.StartsWith("/hero"))
             {
-                await HandleHeroCommand(message);
+                await HandleHero(message);
                 return;
             }
             if (message.Text.StartsWith("/player"))
             {
-                await HandlePlayerCommand(message);
+                await HandlePlayer(message);
                 return;
             }
         }
 
-        private async Task SendMainMenu(long chatId)
+        private async Task MainMenu(long chatId)
         {
             var replyKeyboard = new ReplyKeyboardMarkup(new[]
             {
@@ -145,7 +142,8 @@ namespace TelegramBot
                 new KeyboardButton[] { "🏆 Команди", "⚔️ Останні Матчі" },
                 new KeyboardButton[] { "📝 Останній патч", "🔔 Підписки" },
                 new KeyboardButton[] { "🎬 GIF", "🎲 Випадковий Герой" },
-                new KeyboardButton[]  { "🏆 Топ-10 гравців" }
+                new KeyboardButton[]  { "🏆 Топ-10 гравців" },
+                new KeyboardButton[] { "⭐ Улюблені герої", "⭐ Улюблені команди" }
             })
             {
                 ResizeKeyboard = true
@@ -153,7 +151,7 @@ namespace TelegramBot
             await _botClient.SendMessage(chatId, "Оберіть поле", replyMarkup: replyKeyboard);
         }
 
-        private async Task SendSubscriptionMenu(long chatId)
+        private async Task SubscribeMenu(long chatId)
         {
             var replyKeyboard = new ReplyKeyboardMarkup(new[]
             {
@@ -258,7 +256,13 @@ namespace TelegramBot
 
         private async Task HandleTopPlayers(long chatId)
         {
-            var leaderboard = await GetCachedLeaderboardAsync();
+            var response = await _httpClient.GetAsync("api/Player/GetLeaderBoardDatabase");
+            if (!response.IsSuccessStatusCode)
+            {
+                await _botClient.SendMessage(chatId, "Немає даних у топі гравців");
+                return;
+            }
+            var leaderboard = await response.Content.ReadFromJsonAsync<List<PlayerRankCache>>();
             if (leaderboard == null || leaderboard.Count == 0)
             {
                 await _botClient.SendMessage(chatId, "Немає даних у топі гравців");
@@ -277,7 +281,7 @@ namespace TelegramBot
         }
 
 
-        private async Task HandleGifCommand(Message message)
+        private async Task HandleGif(Message message)
         {
             var parts = message.Text.Split(' ', 2);
             if (parts.Length < 2)
@@ -289,7 +293,7 @@ namespace TelegramBot
             var response = await _httpClient.GetAsync($"api/Gif/GetByTag?tag={gifName}");
             if (!response.IsSuccessStatusCode)
             {
-                await _botClient.SendMessage(message.Chat.Id, $"Помилка API: {(int)response.StatusCode}");
+                await _botClient.SendMessage(message.Chat.Id, $"Ви ввели тег не англійською мовою, спробуйте ще раз");
                 return;
             }
             var gif = await response.Content.ReadFromJsonAsync<Giphy.RandomGiphy>();
@@ -302,7 +306,7 @@ namespace TelegramBot
             await _botClient.SendAnimation(message.Chat.Id, gif.Data.Images.FixedHeight.Url, caption: $"Гіфка за тегом: {gifName}");
         }
 
-        private async Task HandleSubscribeCommand(Message message)
+        private async Task HandleCreateSubscribe(Message message)
         {
             var parts = message.Text.Split(' ', 4);
             if (parts.Length < 3)
@@ -332,7 +336,7 @@ namespace TelegramBot
                 await _botClient.SendMessage(message.Chat.Id, "Помилка при підписці.");
         }
 
-        private async Task HandleShowSubscriptions(long chatId)
+        private async Task HandleShowSubscribe(long chatId)
         {
             var response = await _httpClient.GetAsync($"api/Subscribe/GetById?id={chatId}");
             if (!response.IsSuccessStatusCode)
@@ -356,7 +360,7 @@ namespace TelegramBot
             await _botClient.SendMessage(chatId, sb.ToString() + $"Чи підписані на патч: {isSubscribedForPatch}");
         }
 
-        private async Task HandleDeleteLastSubscription(long chatId)
+        private async Task HandleDeleteLastSubscribe(long chatId)
         {
             var response = await _httpClient.DeleteAsync($"api/Subscribe/DeleteSubscribe?id={chatId}");
             if (response.IsSuccessStatusCode)
@@ -368,8 +372,101 @@ namespace TelegramBot
                 await _botClient.SendMessage(chatId, "Помилка при видаленні підписки або у вас немає підписок.");
             }
         }
+        private async Task HandleFavouriteHeroes(long chatId)
+        {
+            var response = await _httpClient.GetAsync($"api/Subscribe/GetById?id={chatId}");
+            if (!response.IsSuccessStatusCode)
+            {
+                await _botClient.SendMessage(chatId, "Не вдалося отримати улюблених героїв.");
+                return;
+            }
+            var subs = await response.Content.ReadFromJsonAsync<List<Subscribe>>();
+            if (subs == null || subs.Count == 0)
+            {
+                await _botClient.SendMessage(chatId, "У вас немає улюблених героїв.");
+                return;
+            }
+            var heroIds = subs
+                .Where(s => s.FavouriteHeroId != 0)
+                .GroupBy(s => s.FavouriteHeroId)
+                .Select(g => g.Key)
+                .ToList();
 
-        private async Task HandleTeamCommand(Message message)
+            if (heroIds.Count == 0)
+            {
+                await _botClient.SendMessage(chatId, "У вас немає улюблених героїв.");
+                return;
+            }
+
+            var sb = new StringBuilder();
+            sb.AppendLine("Ваші улюблені герої:");
+            foreach (var heroId in heroIds)
+            {
+                var heroResponse = await _httpClient.GetAsync($"api/Hero/GetHeroById?id={heroId}");
+                if (heroResponse.IsSuccessStatusCode)
+                {
+                    var hero = await heroResponse.Content.ReadFromJsonAsync<Hero>();
+                    if (hero != null) 
+                    {
+                        sb.AppendLine($"- Герой: {hero.LocalizedName}");
+                        sb.AppendLine($"- ID: { hero.Id}");
+                        sb.AppendLine($"Атрибут: " + GetAttributeDisplayName(hero.PrimaryAttr));
+                        sb.AppendLine();
+                    }
+                }else
+                    await _botClient.SendMessage(chatId, "Команда з таким айді немає або ви вказали неправильний айді при підписці.");
+            }
+            await _botClient.SendMessage(chatId, sb.ToString());
+        }
+        private async Task HandleFavouriteTeams(long chatId)
+        {
+            var response = await _httpClient.GetAsync($"api/Subscribe/GetById?id={chatId}");
+            if (!response.IsSuccessStatusCode)
+            {
+                await _botClient.SendMessage(chatId, "Не вдалося отримати улюблені команди.");
+                return;
+            }
+            var subs = await response.Content.ReadFromJsonAsync<List<Subscribe>>();
+            if (subs == null || subs.Count == 0)
+            {
+                await _botClient.SendMessage(chatId, "У вас немає улюблених команд.");
+                return;
+            }
+            var teamIds = subs
+                .Where(s => s.FavouriteTeamId != 0)
+                .GroupBy(s => s.FavouriteTeamId)
+                .Select(g => g.Key)
+                .ToList();
+
+            if (teamIds.Count == 0)
+            {
+                await _botClient.SendMessage(chatId, "У вас немає улюблених команд.");
+                return;
+            }
+
+            var sb = new StringBuilder();
+            sb.AppendLine("Ваші улюблені команди:");
+            foreach (var teamId in teamIds)
+            {
+                var teamResponse = await _httpClient.GetAsync($"api/Team/GetTeamById?id={teamId}");
+                if (teamResponse.IsSuccessStatusCode)
+                {
+                        var team = await teamResponse.Content.ReadFromJsonAsync<Team>();
+
+                        if (team != null)
+                        {
+                            sb.AppendLine(team.Name);
+                            sb.AppendLine($"- Тег: {team.Tag}");
+                            sb.AppendLine($"- ID: {team.TeamId}");
+                            sb.AppendLine();
+                        }
+                }else
+                    await _botClient.SendMessage(chatId, "Одна з команд що ви вказалі при підписці немає або ви вказали неправильний айді.");
+            }
+            await _botClient.SendMessage(chatId, sb.ToString());
+        }
+
+        private async Task HandleTeam(Message message)
         {
             if (message.Text == "/teams")
             {
@@ -401,28 +498,55 @@ namespace TelegramBot
                     sb.AppendLine($"Поразки: {team.Losses}");
                 }
                 await SendLongMessage(message.Chat.Id, sb.ToString());
+                return;
             }
-            else
+            var parts = message.Text.Split(' ', 2);
+            if (parts.Length < 2)
             {
-                var parts = message.Text.Split(' ', 2);
-                if (parts.Length < 2)
-                {
-                    await _botClient.SendMessage(message.Chat.Id, "Використайте: /team <id>");
-                    return;
-                }
-                var teamName = parts[1].Trim();
-                var response = await _httpClient.GetAsync($"api/Team/GetTeamByName?name={teamName}");
+                await _botClient.SendMessage(message.Chat.Id, "Використайте: /team <name> або /team <id>");
+                return;
+            }
+            var teamInput = parts[1].Trim();
+            if (int.TryParse(teamInput, out int teamId))
+            {
+                var sb = new StringBuilder();
+                var response = await _httpClient.GetAsync($"api/Team/GetTeamById?id={teamId}");
                 if (!response.IsSuccessStatusCode)
                 {
                     await _botClient.SendMessage(message.Chat.Id, $"Помилка API: {(int)response.StatusCode}");
                     return;
                 }
                 var team = await response.Content.ReadFromJsonAsync<Team>();
-                if (team == null)
+
+                sb.AppendLine("Інформація про команду:");
+                sb.AppendLine($"Назва: {team.Name}");
+                sb.AppendLine($"ID: {team.TeamId}");
+                sb.AppendLine($"Тег: {team.Tag}");
+                sb.AppendLine($"Рейтинг: {team.Rating}");
+                sb.AppendLine($"Перемоги: {team.Wins}");
+                sb.AppendLine($"Поразки: {team.Losses}");
+                await _botClient.SendMessage(message.Chat.Id, sb.ToString());
+            }
+            else
+            {
+                var response = await _httpClient.GetAsync($"api/Team/GetTeamByName?name={teamInput}");
+                if (!response.IsSuccessStatusCode)
                 {
-                    await _botClient.SendMessage(message.Chat.Id, "Команду з такою назвою не знайдено.");
+                    await _botClient.SendMessage(message.Chat.Id, $"Помилка API: {(int)response.StatusCode}");
                     return;
                 }
+                if ((int)response.StatusCode == 204)
+                {
+                    await _botClient.SendMessage(message.Chat.Id, "Команди з такою назвою не має, спробуйте ще раз.");
+                    return;
+                }
+                var team = await response.Content.ReadFromJsonAsync<Team>();
+                if (team == null)
+                {
+                    await _botClient.SendMessage(message.Chat.Id, "Команду з такою назвою не знайдено, спробуйте ще раз.");
+                    return;
+                }
+
                 var sb = new StringBuilder();
                 sb.AppendLine("Інформація про команду:");
                 sb.AppendLine($"Назва: {team.Name}");
@@ -435,7 +559,7 @@ namespace TelegramBot
             }
         }
 
-        private async Task HandleHeroCommand(Message message)
+        private async Task HandleHero(Message message)
         {
 
             if (message.Text == "/heroes")
@@ -470,44 +594,56 @@ namespace TelegramBot
             var parts = message.Text.Split(' ', 2);
             if (parts.Length < 2)
             {
-                await _botClient.SendMessage(message.Chat.Id, "Використайте: /hero <heroName> або /hero <id>");
+                await _botClient.SendMessage(message.Chat.Id, "Використайте: /hero <name> або /hero <id>");
                 return;
             }
             var heroInput = parts[1].Trim();
             if (int.TryParse(heroInput, out int heroId))
             {
                 var sb = new StringBuilder();
-                var response = await _httpClient.GetAsync($"api/Hero/GetByIdHero?id={heroId}");
-                var meta = await response.Content.ReadFromJsonAsync<Hero>();
-                if (meta == null)
+                var response = await _httpClient.GetAsync($"api/Hero/GetHeroById?id={heroId}");
+                if (!response.IsSuccessStatusCode)
                 {
-                    await _botClient.SendMessage(message.Chat.Id, "Героя з таким ID не знайдено.");
+                    await _botClient.SendMessage(message.Chat.Id, $"Помилка API: {(int)response.StatusCode}");
                     return;
                 }
-                sb.AppendLine($"- Дані для {meta.LocalizedName}");
-                sb.AppendLine($"— Його атрибут: " + GetAttributeDisplayName(meta.PrimaryAttr));
-                sb.AppendLine($"- Тип атаки: {meta.AttackType}");
+                if ((int)response.StatusCode == 204)
+                {
+                    await _botClient.SendMessage(message.Chat.Id, "Героя з таким ID не знайдено, спробуйте ще раз");
+                    return;
+                }
+                var findHero = await response.Content.ReadFromJsonAsync<Hero>();
+
+                sb.AppendLine($"- Дані для {findHero.LocalizedName}");
+                sb.AppendLine($"— Його атрибут: " + GetAttributeDisplayName(findHero.PrimaryAttr));
+                sb.AppendLine($"- Тип атаки: {findHero.AttackType}");
                 await _botClient.SendMessage(message.Chat.Id, sb.ToString());
             }
             else
             {
                 var sb = new StringBuilder();
-                var resp = await _httpClient.GetAsync($"api/Hero/GetByName?name={heroInput.ToLower()}");
-                var meta = await resp.Content.ReadFromJsonAsync<Hero>();
-                if (meta == null)
+                var response = await _httpClient.GetAsync($"api/Hero/GetHeroByName?name={heroInput.ToLower()}");
+                if (!response.IsSuccessStatusCode)
                 {
-                    await _botClient.SendMessage(message.Chat.Id, "Героя з таким ім'ям не знайдено.");
+                    await _botClient.SendMessage(message.Chat.Id, $"Помилка API: {(int)response.StatusCode}");
                     return;
                 }
-                sb.AppendLine($"- Дані для {meta.LocalizedName}");
-                sb.AppendLine($"— Його атрибут: " + GetAttributeDisplayName(meta.PrimaryAttr));
-                sb.AppendLine($"— Його ID: {meta.Id}");
-                sb.AppendLine($"- Тип атаки: {meta.AttackType}");
+                if ((int)response.StatusCode == 204)
+                {
+                    await _botClient.SendMessage(message.Chat.Id, "Героя з таким ім'ям не знайдено або ви написали не англійською, спробуйте ще раз");
+                    return;
+                }
+                var findHero = await response.Content.ReadFromJsonAsync<Hero>();
+                
+                sb.AppendLine($"- Дані для {findHero.LocalizedName}");
+                sb.AppendLine($"— Його атрибут: " + GetAttributeDisplayName(findHero.PrimaryAttr));
+                sb.AppendLine($"— Його ID: {findHero.Id}");
+                sb.AppendLine($"- Тип атаки: {findHero.AttackType}");
                 await _botClient.SendMessage(message.Chat.Id, sb.ToString());
             }
         }
 
-        private async Task HandlePlayerCommand(Message message)
+        private async Task HandlePlayer(Message message)
         {
             if (message.Text == "/players")
             {
@@ -718,18 +854,6 @@ namespace TelegramBot
                 _ => attr ?? "Невідомо"
             };
         }
-        public async Task<List<PlayerRankCache>> GetCachedLeaderboardAsync()
-        {
-            var cacheLifetime = TimeSpan.FromHours(24); // або інший інтервал
-
-            if (!await _leaderboardCacheService.IsCacheActualAsync(cacheLifetime))
-            {
-                await _leaderboardCacheService.UpdateLeaderboardCacheAsync();
-            }
-
-            return await _dbContext.PlayerRanksCache.OrderBy(x => x.Rank).ToListAsync();
-        }
-
-
+        
     }
 }

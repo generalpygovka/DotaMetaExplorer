@@ -1,6 +1,5 @@
 ﻿using DotaMetaExplorer.Context;
 using DotaMetaExplorer.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 

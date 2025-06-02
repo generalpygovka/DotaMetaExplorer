@@ -1,5 +1,6 @@
-﻿using DotaMetaExplorer.Models;
+﻿using DotaMetaExplorer.Context;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace DotaMetaExplorer.Controllers;
 
@@ -7,10 +8,16 @@ namespace DotaMetaExplorer.Controllers;
 [ApiController]
 public class PlayerController : ControllerBase
 {
-    readonly string _address;
-    public PlayerController()
+    private readonly ApplicationDBContext _context;
+    public PlayerController(ApplicationDBContext context)
     {
-        _address = Constants.proPlayers;
+        _context = context;
+    }
+    [HttpGet("GetLeaderBoardDatabase")]
+    public async Task<IActionResult> GetLeaderboardDatabase()
+    {
+        var leaderboard = await _context.PlayerRanksCache.OrderBy(x => x.Rank).ToListAsync();
+        return Ok(leaderboard);
     }
 
     [HttpGet("GetProPlayers")]
@@ -20,7 +27,7 @@ public class PlayerController : ControllerBase
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
-            RequestUri = new Uri(_address),
+            RequestUri = new Uri(Constants.proPlayers),
         };
         using (var response = await client.SendAsync(request))
         {
@@ -47,14 +54,14 @@ public class PlayerController : ControllerBase
         }
     }
 
-    [HttpGet("GetLeaderboard")]
-    public async Task<IActionResult> GetLeaderboard()
+    [HttpGet("GetLeaderboardSlow")]
+    public async Task<IActionResult> GetLeaderboardSlow()
     {
         var client = new HttpClient();
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
-            RequestUri = new Uri(_address),
+            RequestUri = new Uri(Constants.proPlayers),
         };
         using (var response = await client.SendAsync(request))
         {
