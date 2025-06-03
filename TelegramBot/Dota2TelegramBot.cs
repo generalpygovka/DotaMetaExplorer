@@ -32,7 +32,7 @@ namespace TelegramBot
         {
             var errorMessage = exception switch
             {
-                ApiRequestException apiRequestException => $"Ошибка в Telegram бот API:\n{apiRequestException.ErrorCode}",
+                ApiRequestException apiRequestException => $"Помилак в Telegram бот API:\n{apiRequestException.ErrorCode}",
                 _ => exception.ToString()
             };
             Console.WriteLine(errorMessage);
