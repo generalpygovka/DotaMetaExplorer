@@ -1,7 +1,6 @@
 ﻿using TelegramBot;
 
-
-var bot = new Dota2TelegramBot();
-_ = bot.CheckForNewPatchAsync(); 
-await bot.Start();
-
+Dota2TelegramBot dota2TelegramBot = new Dota2TelegramBot();
+dota2TelegramBot.Start();
+await dota2TelegramBot.CheckForNewPatchAsync();
+Console.ReadKey();

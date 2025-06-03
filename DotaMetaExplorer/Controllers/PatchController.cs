@@ -14,6 +14,7 @@ public class PatchController : ControllerBase
     {
         _httpclient = httpClient;
     }
+    [HttpGet("latest")]
     public async Task<string> GetLatestVersionAsync()
     {
         var client = new HttpClient();

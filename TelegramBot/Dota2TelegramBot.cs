@@ -256,7 +256,7 @@ namespace TelegramBot
 
         private async Task HandleTopPlayers(long chatId)
         {
-            var response = await _httpClient.GetAsync("api/Player/GetLeaderBoardDatabase");
+            var response = await _httpClient.GetAsync("api/Player/GetLeaderboardDatabase");
             if (!response.IsSuccessStatusCode)
             {
                 await _botClient.SendMessage(chatId, "Немає даних у топі гравців");
@@ -275,12 +275,10 @@ namespace TelegramBot
                 sb.AppendLine(new string('-', 20));
                 sb.AppendLine($"\nНік: {player.PersonaName}");
                 sb.AppendLine($"Аккаунт айді: {player.AccountId}");
-                sb.AppendLine($"Ранг у світовій таблиці: {player.Rank}");
+                sb.AppendLine($"Ранг у світовій таблиці: {player.LeaderboardRank}");
             }
             await _botClient.SendMessage(chatId, sb.ToString());
         }
-
-
         private async Task HandleGif(Message message)
         {
             var parts = message.Text.Split(' ', 2);

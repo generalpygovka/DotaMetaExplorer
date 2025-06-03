@@ -1,9 +1,6 @@
 ﻿using DotaMetaExplorer.Context;
 using DotaMetaExplorer.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using System.Net.Http.Json;
 
 namespace DotaMetaExplorer.Services;
 
@@ -15,10 +12,11 @@ public class LeaderboardCacheService : BackgroundService
     {
         _scopeFactory = scopeFactory;
     }
-
-    // Основной цикл фонового сервиса
+        
+  
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        await UpdateLeaderboardCacheAsync();
         while (!stoppingToken.IsCancellationRequested)
         {
             await Task.Delay(TimeSpan.FromHours(24), stoppingToken);
@@ -26,14 +24,13 @@ public class LeaderboardCacheService : BackgroundService
         }
     }
 
-    // Обновление кэша рейтинга
     public async Task UpdateLeaderboardCacheAsync()
     {
+        var client = new HttpClient();
         using var scope = _scopeFactory.CreateScope();
         var _context = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
 
-        var client = new HttpClient();
-        var proPlayers = await client.GetFromJsonAsync<List<ProPlayer>>(Constants.proPlayers);
+        var proPlayers = await client.GetFromJsonAsync<List<ProPlayer>>(Constants.proPlayers + "?api_key=76b37873-3339-4684-a85b-d67c7605a573");
 
         var leaderboard = new List<PlayerRankCache>();
 
@@ -44,7 +41,7 @@ public class LeaderboardCacheService : BackgroundService
                 if (proPlayer.AccountId == null)
                     continue;
 
-                var playerResponse = await client.GetAsync($"https://api.opendota.com/api/players/{proPlayer.AccountId}");
+                var playerResponse = await client.GetAsync($"https://api.opendota.com/api/players/{proPlayer.AccountId}?api_key=76b37873-3339-4684-a85b-d67c7605a573");
                 if (!playerResponse.IsSuccessStatusCode)
                     continue;
 
@@ -56,16 +53,14 @@ public class LeaderboardCacheService : BackgroundService
                 {
                     AccountId = proPlayer.AccountId.Value,
                     PersonaName = proPlayer.PersonaName ?? "",
-                    Rank = player.LeaderboardRank.Value
+                    LeaderboardRank = player.LeaderboardRank.Value
                 });
             }
         }
 
-        // Обновление таблицы рейтинга
         _context.PlayerRanksCache.RemoveRange(_context.PlayerRanksCache);
-        await _context.PlayerRanksCache.AddRangeAsync(leaderboard.OrderBy(x => x.Rank).Take(10));
+        await _context.PlayerRanksCache.AddRangeAsync(leaderboard.OrderBy(x => x.LeaderboardRank).Take(10));
 
-        // Обновление времени кэша
         var cache = await _context.RatingCaches.FirstOrDefaultAsync();
         if (cache == null)
         {

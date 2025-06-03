@@ -30,15 +30,15 @@ namespace DotaMetaExplorer.Tests
         {
             var (sut, ctx) = CreateDbAndController(nameof(GetLeaderboardDatabase_ReturnsOrderedRanks));
             ctx.PlayerRanksCache.AddRange(
-                new PlayerRankCache { Rank = 5, AccountId = 50, PersonaName = "X" },
-                new PlayerRankCache { Rank = 1, AccountId = 10, PersonaName = "Y" }
+                new PlayerRankCache { LeaderboardRank = 5, AccountId = 50, PersonaName = "X" },
+                new PlayerRankCache { LeaderboardRank = 1, AccountId = 10, PersonaName = "Y" }
             );
             await ctx.SaveChangesAsync();
 
             var actionResult = await sut.GetLeaderboardDatabase() as OkObjectResult;
             var list = Assert.IsType<List<PlayerRankCache>>(actionResult!.Value!);
 
-            Assert.Equal(new[] { 1, 5 }, list.Select(r => r.Rank).ToArray());
+            Assert.Equal(new[] { 1, 5 }, list.Select(r => r.LeaderboardRank).ToArray());
         }
         [Fact]  /* GetPlayerById */
         public async Task GetPlayers_ReturnsPlayer()
