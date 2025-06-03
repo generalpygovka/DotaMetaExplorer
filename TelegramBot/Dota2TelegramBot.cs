@@ -13,7 +13,7 @@ namespace TelegramBot
 {
     public class Dota2TelegramBot
     {
-        private readonly HttpClient _httpClient = new HttpClient() { BaseAddress = new Uri("https://localhost:7030/") };
+        private readonly HttpClient _httpClient = new HttpClient() { BaseAddress = new Uri("http://dotametaexplorer:8080") };
         private readonly TelegramBotClient _botClient = new("7247243723:AAFs8m30615JIbYOse1fOW-hMEQhZfbU2Ok");
         private readonly CancellationToken _cancellationToken = new();
         private readonly ReceiverOptions _receiverOptions = new() { AllowedUpdates = { } };
