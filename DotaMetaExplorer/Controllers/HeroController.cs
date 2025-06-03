@@ -9,22 +9,22 @@ namespace DotaMetaExplorer.Controllers;
 public class HeroController : ControllerBase
 {
     readonly string _address;
-    public HeroController()
+    readonly HttpClient _httpclient;
+    public HeroController(HttpClient httpClient)
     {
         _address = Constants.heroesAddress;
+        _httpclient = httpClient;
     }
 
     [HttpGet("GetHeroByName")]
-    
     public async Task<IActionResult> GetByName(string name)
     {
-        var client = new HttpClient();
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
             RequestUri = new Uri(_address),
         };
-        using (var response = await client.SendAsync(request))
+        using (var response = await _httpclient.SendAsync(request))
         {
             response.EnsureSuccessStatusCode();
             var body = await response.Content.ReadFromJsonAsync<List<Hero>>();
@@ -33,16 +33,14 @@ public class HeroController : ControllerBase
     }
 
     [HttpGet("GetAllHeroes")]
-    
     public async Task<IActionResult> GetAllHeroes()
     {
-        var client = new HttpClient();
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
             RequestUri = new Uri(_address),
         };
-        using (var response = await client.SendAsync(request))
+        using (var response = await _httpclient.SendAsync(request))
         {
             response.EnsureSuccessStatusCode();
             var body = await response.Content.ReadFromJsonAsync<List<Hero>>();
@@ -53,13 +51,12 @@ public class HeroController : ControllerBase
     [HttpGet("GetHeroById")]
     public async Task<IActionResult> GetByIdHero(int id)
     {
-        var client = new HttpClient();
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
             RequestUri = new Uri(_address),
         };
-        using (var response = await client.SendAsync(request))
+        using (var response = await _httpclient.SendAsync(request))
         {
             response.EnsureSuccessStatusCode();
             var body = await response.Content.ReadFromJsonAsync<List<Hero>>();
@@ -71,13 +68,12 @@ public class HeroController : ControllerBase
     public async Task<IActionResult> GetRandomHero()
     {
         var random = new Random();
-        var client = new HttpClient();
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
             RequestUri = new Uri(_address),
         };
-        using (var response = await client.SendAsync(request))
+        using (var response = await _httpclient.SendAsync(request))
         {
             response.EnsureSuccessStatusCode();
             var body = await response.Content.ReadFromJsonAsync<List<Hero>>();

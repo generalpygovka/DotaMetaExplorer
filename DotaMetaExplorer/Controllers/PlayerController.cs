@@ -9,10 +9,13 @@ namespace DotaMetaExplorer.Controllers;
 public class PlayerController : ControllerBase
 {
     private readonly ApplicationDBContext _context;
-    public PlayerController(ApplicationDBContext context)
+    readonly HttpClient _httpclient;
+    public PlayerController(ApplicationDBContext context, HttpClient httpclient)
     {
         _context = context;
+        _httpclient = httpclient;
     }
+
     [HttpGet("GetLeaderBoardDatabase")]
     public async Task<IActionResult> GetLeaderboardDatabase()
     {
@@ -23,13 +26,12 @@ public class PlayerController : ControllerBase
     [HttpGet("GetProPlayers")]
     public async Task<IActionResult> GetProPlayers()
     {
-        var client = new HttpClient();
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
             RequestUri = new Uri(Constants.proPlayers),
         };
-        using (var response = await client.SendAsync(request))
+        using (var response = await _httpclient.SendAsync(request))
         {
             response.EnsureSuccessStatusCode();
             var body = await response.Content.ReadFromJsonAsync<List<ProPlayer>>();
@@ -40,13 +42,12 @@ public class PlayerController : ControllerBase
     [HttpGet("GetPlayerById")]
     public async Task<IActionResult> GetPlayers(int id)
     {
-        var client = new HttpClient();
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
             RequestUri = new Uri($"https://api.opendota.com/api/players/{id}"),
         };
-        using (var response = await client.SendAsync(request))
+        using (var response = await _httpclient.SendAsync(request))
         {
             response.EnsureSuccessStatusCode();
             var body = await response.Content.ReadFromJsonAsync<Player>();
@@ -57,13 +58,12 @@ public class PlayerController : ControllerBase
     [HttpGet("GetLeaderboardSlow")]
     public async Task<IActionResult> GetLeaderboardSlow()
     {
-        var client = new HttpClient();
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
             RequestUri = new Uri(Constants.proPlayers),
         };
-        using (var response = await client.SendAsync(request))
+        using (var response = await _httpclient.SendAsync(request))
         {
             response.EnsureSuccessStatusCode();
             var proPlayers = await response.Content.ReadFromJsonAsync<List<ProPlayer>>();
@@ -74,7 +74,7 @@ public class PlayerController : ControllerBase
             {
                 if (proPlayer.AccountId == null)
                     continue; // Пропустить игроков без профиля
-                var playerResponse = await client.GetAsync($"https://api.opendota.com/api/players/{proPlayer.AccountId}");
+                var playerResponse = await _httpclient.GetAsync($"https://api.opendota.com/api/players/{proPlayer.AccountId}");
                 var player = await playerResponse.Content.ReadFromJsonAsync<Player>();
                 leaderboard.Add((proPlayer, player?.LeaderboardRank));
             }

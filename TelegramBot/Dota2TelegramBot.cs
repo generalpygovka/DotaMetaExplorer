@@ -422,8 +422,7 @@ namespace TelegramBot
         {
             var response = await _httpClient.GetAsync($"api/Subscribe/GetById?id={chatId}");
             if (!response.IsSuccessStatusCode)
-            {
-                await _botClient.SendMessage(chatId, "Не вдалося отримати улюблені команди.");
+            {                await _botClient.SendMessage(chatId, "Не вдалося отримати улюблені команди.");
                 return;
             }
             var subs = await response.Content.ReadFromJsonAsync<List<Subscribe>>();

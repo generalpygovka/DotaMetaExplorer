@@ -8,21 +8,22 @@ namespace DotaMetaExplorer.Controllers;
 public class TeamController : ControllerBase
 {
     readonly string _address;
-    public TeamController()
+    readonly HttpClient _httpclient;
+    public TeamController(HttpClient httpClient)
     {
         _address = Constants.teamsAddress;
+        _httpclient = httpClient;
     }
 
     [HttpGet("GetTeamByName")]
     public async Task<IActionResult> GetTeamByName(string name)
     {
-        var client = new HttpClient();
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
             RequestUri = new Uri(_address),
         };
-        using (var response = await client.SendAsync(request))
+        using (var response = await _httpclient.SendAsync(request))
         {
             response.EnsureSuccessStatusCode();
             var body = await response.Content.ReadFromJsonAsync<List<Team>>();
@@ -33,13 +34,12 @@ public class TeamController : ControllerBase
     [HttpGet("GetTeamById")]
     public async Task<IActionResult> GetTeamById(int id)
     {
-        var client = new HttpClient();
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
             RequestUri = new Uri($"https://api.opendota.com/api/teams/{id}"),
         };
-        using (var response = await client.SendAsync(request))
+        using (var response = await _httpclient.SendAsync(request))
         {
             response.EnsureSuccessStatusCode();
             var body = await response.Content.ReadFromJsonAsync<Team>();
@@ -50,13 +50,12 @@ public class TeamController : ControllerBase
     [HttpGet("GetAllTeams")]
     public async Task<IActionResult> GetAllTeams()
     {
-        var client = new HttpClient();
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
             RequestUri = new Uri(_address),
         };
-        using (var response = await client.SendAsync(request))
+        using (var response = await _httpclient.SendAsync(request))
         {
             response.EnsureSuccessStatusCode();
             var bodys = await response.Content.ReadFromJsonAsync<List<Team>>();

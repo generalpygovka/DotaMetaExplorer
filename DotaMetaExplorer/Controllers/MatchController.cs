@@ -9,21 +9,22 @@ namespace DotaMetaExplorer.Controllers;
 public class MatchController : ControllerBase
 {
     readonly string _address;
-    public MatchController()
+    readonly HttpClient _httpclient;
+    public MatchController(HttpClient httpClient)
     {
         _address = Constants.proMatches;
+        _httpclient = httpClient;
     }
     [HttpGet("GetRecentMatches")]
 
     public async Task<IActionResult> GetRecentMatches()
     {
-        var client = new HttpClient();
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
             RequestUri = new Uri(_address),
         };
-        using (var response = await client.SendAsync(request))
+        using (var response = await _httpclient.SendAsync(request))
         {
             response.EnsureSuccessStatusCode();
             var body = await response.Content.ReadFromJsonAsync<List<ProMatches>>();

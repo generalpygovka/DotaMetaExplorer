@@ -9,7 +9,12 @@ namespace DotaMetaExplorer.Controllers;
 [ApiController]
 public class PatchController : ControllerBase
 {
-    public static async Task<string> GetLatestVersionAsync()
+    readonly HttpClient _httpclient;
+    public PatchController(HttpClient httpClient)
+    {
+        _httpclient = httpClient;
+    }
+    public async Task<string> GetLatestVersionAsync()
     {
         var client = new HttpClient();
         var request = new HttpRequestMessage
@@ -17,7 +22,7 @@ public class PatchController : ControllerBase
             Method = HttpMethod.Get,
             RequestUri = new Uri("https://www.dota2.com/datafeed/patchnoteslist?language=Ukrainian"),
         };
-        using (var response = await client.SendAsync(request))
+        using (var response = await _httpclient.SendAsync(request))
         {
             response.EnsureSuccessStatusCode();
             var body = await response.Content.ReadFromJsonAsync<PatchList>();
@@ -42,7 +47,7 @@ public class PatchController : ControllerBase
             Method = HttpMethod.Get,
             RequestUri = new Uri("https://www.dota2.com/datafeed/patchnotes?language=Ukrainian&version=" + version),
         };
-        using (var response = await client.SendAsync(request))
+        using (var response = await _httpclient.SendAsync(request))
         {
             response.EnsureSuccessStatusCode();
             var body = await response.Content.ReadFromJsonAsync<PatchNotes>();
