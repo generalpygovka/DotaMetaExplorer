@@ -30,7 +30,7 @@ public class LeaderboardCacheService : BackgroundService
         using var scope = _scopeFactory.CreateScope();
         var _context = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
 
-        var proPlayers = await client.GetFromJsonAsync<List<ProPlayer>>(Constants.proPlayers + "?api_key=76b37873-3339-4684-a85b-d67c7605a573");
+        var proPlayers = await client.GetFromJsonAsync<List<ProPlayer>>(Constants.proPlayers );
 
         var leaderboard = new List<PlayerRankCache>();
 
@@ -41,7 +41,7 @@ public class LeaderboardCacheService : BackgroundService
                 if (proPlayer.AccountId == null)
                     continue;
 
-                var playerResponse = await client.GetAsync($"https://api.opendota.com/api/players/{proPlayer.AccountId}?api_key=76b37873-3339-4684-a85b-d67c7605a573");
+                var playerResponse = await client.GetAsync($"https://api.opendota.com/api/players/{proPlayer.AccountId}");
                 if (!playerResponse.IsSuccessStatusCode)
                     continue;
 
