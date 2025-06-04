@@ -18,11 +18,13 @@ jobs:
           ACCEPT_EULA: "Y"
         ports:
           - 1433:1433
-        options: >-
-          --health-cmd "echo 'SELECT 1' | /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P Your_password123!"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
+        # Прибираємо healthcheck, бо він зараз повертає unhealthy занадто довго.
+        # Якщо хочете власний healthcheck, додайте нижче:
+        # options: >-
+        #   --health-cmd "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P Your_password123! -Q \"SELECT 1;\""
+        #   --health-interval 10s
+        #   --health-timeout 5s
+        #   --health-retries 10
 
     steps:
       - name: Checkout code
@@ -33,25 +35,83 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Restore projects
+      # ---------------------------------------------------------------------------------------------------
+      # Крок-чекер: очікуємо, поки MSSQL насправді стане до ладу
+      # ---------------------------------------------------------------------------------------------------
+      - name: Wait for SQL Server to be ready
+        run: |
+          echo "Очікуємо, поки SQL Server запуститься..."
+          for i in {1..30}; do
+            # Пробуємо виконати простий запит через sqlcmd
+            /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "Your_password123!" -Q "SELECT 1" &> /dev/null
+            status=$?
+            if [ $status -eq 0 ]; then
+              echo "SQL Server готовий після $i спроб."
+              break
+            fi
+            echo "SQL Server ще не готовий ($i). Чекаємо 5 сек..."
+            sleep 5
+          done
+
+      # ---------------------------------------------------------------------------------------------------
+      # Секція з відновлення пакетів (.NET Restore)
+      # ---------------------------------------------------------------------------------------------------
+      - name: Restore all projects
         run: |
           dotnet restore DotaMetaExplorer/DotaMetaExplorer.csproj
           dotnet restore TelegramBot/TelegramBot.csproj
           dotnet restore DotaMetaExplorer.Tests/DotaMetaExplorer.Tests.csproj
 
-      - name: Build projects
+      # ---------------------------------------------------------------------------------------------------
+      # Секція збірки (.NET Build)
+      # ---------------------------------------------------------------------------------------------------
+      - name: Build all projects
         run: |
-          dotnet build DotaMetaExplorer/DotaMetaExplorer.csproj --configuration Release --no-restore
-          dotnet build TelegramBot/TelegramBot.csproj --configuration Release --no-restore
-          dotnet build DotaMetaExplorer.Tests/DotaMetaExplorer.Tests.csproj --configuration Release --no-restore
+          dotnet build DotaMetaExplorer/DotaMetaExplorer.csproj \
+            --configuration Release \
+            --no-restore
 
+          dotnet build TelegramBot/TelegramBot.csproj \
+            --configuration Release \
+            --no-restore
+
+          dotnet build DotaMetaExplorer.Tests/DotaMetaExplorer.Tests.csproj \
+            --configuration Release \
+            --no-restore
+
+      # ---------------------------------------------------------------------------------------------------
+      # Запуск unit-тестів
+      # ---------------------------------------------------------------------------------------------------
       - name: Run unit tests
-        run: dotnet test DotaMetaExplorer.Tests/DotaMetaExplorer.Tests.csproj --no-build --configuration Release --logger trx
+        run: |
+          dotnet test DotaMetaExplorer.Tests/DotaMetaExplorer.Tests.csproj \
+            --no-build \
+            --configuration Release \
+            --logger trx
         env:
+          # Підключаємося до локального MSSQL, бо він уже стартував та чекався у попередньому кроці
           ConnectionStrings__DefaultConnection: "Server=localhost,1433;Database=dotameta;User Id=sa;Password=Your_password123!;TrustServerCertificate=True"
 
+      # ---------------------------------------------------------------------------------------------------
+      # Збірка Docker-образів
+      # ---------------------------------------------------------------------------------------------------
       - name: Build Docker image for API
-        run: docker build -t dotametaexplorer -f DotaMetaExplorer/Dockerfile DotaMetaExplorer
+        run: |
+          docker build \
+            -t dotametaexplorer \
+            -f DotaMetaExplorer/Dockerfile \
+            DotaMetaExplorer
 
       - name: Build Docker image for TelegramBot
-        run: docker build -t telegrambot -f TelegramBot/Dockerfile .
+        run: |
+          docker build \
+            -t telegrambot \
+            -f TelegramBot/Dockerfile \
+            .
+
+      # ---------------------------------------------------------------------------------------------------
+      # (Опційно) Коли потрібно протестувати інтеграцію з docker-compose,
+      # можна розкоментувати цю секцію:
+      # ---------------------------------------------------------------------------------------------------
+      # - name: Docker Compose up
+      #   run: docker-compose up -d --build
