@@ -29,7 +29,7 @@ public class PlayerController : ControllerBase
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
-            RequestUri = new Uri(Constants.proPlayers + "?api_key=76b37873-3339-4684-a85b-d67c7605a573"),
+            RequestUri = new Uri(Constants.proPlayers),
         };
         using (var response = await _httpclient.SendAsync(request))
         {
@@ -45,7 +45,7 @@ public class PlayerController : ControllerBase
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
-            RequestUri = new Uri($"https://api.opendota.com/api/players/{id}?api_key=76b37873-3339-4684-a85b-d67c7605a573"),
+            RequestUri = new Uri($"https://api.opendota.com/api/players/{id}),
         };
         using (var response = await _httpclient.SendAsync(request))
         {
@@ -61,7 +61,7 @@ public class PlayerController : ControllerBase
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
-            RequestUri = new Uri(Constants.proPlayers + "?api_key=76b37873-3339-4684-a85b-d67c7605a573"),
+            RequestUri = new Uri(Constants.proPlayers),
         };
         using (var response = await _httpclient.SendAsync(request))
         {
@@ -74,7 +74,7 @@ public class PlayerController : ControllerBase
             {
                 if (proPlayer.AccountId == null)
                     continue; // Пропустить игроков без профиля
-                var playerResponse = await _httpclient.GetAsync($"https://api.opendota.com/api/players/{proPlayer.AccountId}?api_key=76b37873-3339-4684-a85b-d67c7605a573");
+                var playerResponse = await _httpclient.GetAsync($"https://api.opendota.com/api/players/{proPlayer.AccountId}");
                 var player = await playerResponse.Content.ReadFromJsonAsync<Player>();
                 leaderboard.Add((proPlayer, player?.LeaderboardRank));
             }

@@ -1,7 +1,5 @@
 ﻿using DotaMetaExplorer.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
 
 namespace DotaMetaExplorer.Controllers;
 

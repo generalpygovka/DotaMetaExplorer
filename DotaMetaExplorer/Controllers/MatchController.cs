@@ -22,7 +22,7 @@ public class MatchController : ControllerBase
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
-            RequestUri = new Uri(_address + "?api_key=76b37873-3339-4684-a85b-d67c7605a573"),
+            RequestUri = new Uri(_address),
         };
         using (var response = await _httpclient.SendAsync(request))
         {
