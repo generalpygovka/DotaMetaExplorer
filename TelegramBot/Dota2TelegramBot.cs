@@ -64,7 +64,7 @@ namespace TelegramBot
                     await _botClient.SendMessage(message.Chat.Id, "Введіть ID гравця /player <id> або використайте команду /players для списку.");
                     break;
                 case "🏆 Команди":
-                    await _botClient.SendMessage(message.Chat.Id, "Введіть ID команди або її назву, наприклад: \n/team Thunder Predator, \n /team 9080405, \nабо список усіх команд: /teams\"");
+                    await _botClient.SendMessage(message.Chat.Id, "Введіть ID команди або її назву, наприклад: \n/team Thunder Predator, \n /team 9080405, \nабо список усіх команд: /teams");
                     break;
                 case "📝 Останній патч":
                     await HandleLatestPatch(message.Chat.Id);
