@@ -1,4 +1,5 @@
 using DotaMetaExplorer.Context;
+using DotaMetaExplorer.Controllers;
 using DotaMetaExplorer.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,6 +12,10 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<ApplicationDBContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddHostedService<LeaderboardCacheService>();
 builder.Services.AddHttpClient();
+builder.Services.AddHttpClient<HeroController>();
+builder.Services.AddHttpClient<TeamController>();
+builder.Services.AddHttpClient<PlayerController>();
+builder.Services.AddHttpClient<MatchController>();
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
