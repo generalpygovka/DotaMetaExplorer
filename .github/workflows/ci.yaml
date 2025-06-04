@@ -14,48 +14,44 @@ jobs:
       mssql:
         image: mcr.microsoft.com/mssql/server:2022-latest
         env:
-          SA_PASSWORD: "Your_strong_password123"
+          SA_PASSWORD: "Your_password123!"
           ACCEPT_EULA: "Y"
         ports:
           - 1433:1433
         options: >-
-          --health-cmd "exit 0"
+          --health-cmd "echo 'SELECT 1' | /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P Your_password123!"
           --health-interval 10s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
 
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup .NET
+      - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
-      - name: Wait for SQL Server to be ready
+      - name: Restore projects
         run: |
-          for i in {1..30}; do
-            if /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "Your_strong_password123" -Q "SELECT 1" &> /dev/null; then
-              echo "SQL Server is up!"
-              break
-            fi
-            echo "Waiting for SQL Server..."
-            sleep 5
-          done
+          dotnet restore DotaMetaExplorer/DotaMetaExplorer.csproj
+          dotnet restore TelegramBot/TelegramBot.csproj
+          dotnet restore DotaMetaExplorer.Tests/DotaMetaExplorer.Tests.csproj
 
-      - name: Restore dependencies
-        run: dotnet restore
+      - name: Build projects
+        run: |
+          dotnet build DotaMetaExplorer/DotaMetaExplorer.csproj --configuration Release --no-restore
+          dotnet build TelegramBot/TelegramBot.csproj --configuration Release --no-restore
+          dotnet build DotaMetaExplorer.Tests/DotaMetaExplorer.Tests.csproj --configuration Release --no-restore
 
-      - name: Build
-        run: dotnet build --no-restore --configuration Release
-
-      - name: Run tests
+      - name: Run unit tests
+        run: dotnet test DotaMetaExplorer.Tests/DotaMetaExplorer.Tests.csproj --no-build --configuration Release --logger trx
         env:
-          ConnectionStrings__DefaultConnection: "Server=localhost,1433;Database=dotameta;User Id=sa;Password=Your_strong_password123;TrustServerCertificate=True"
-        run: dotnet test --no-build --configuration Release --logger trx
+          ConnectionStrings__DefaultConnection: "Server=localhost,1433;Database=dotameta;User Id=sa;Password=Your_password123!;TrustServerCertificate=True"
 
-      - name: Build Docker images
-        run: |
-          docker build -t dotametaexplorer -f DotaMetaExplorer/Dockerfile .
-          docker build -t telegrambot -f TelegramBot/Dockerfile .
+      - name: Build Docker image for API
+        run: docker build -t dotametaexplorer -f DotaMetaExplorer/Dockerfile DotaMetaExplorer
+
+      - name: Build Docker image for TelegramBot
+        run: docker build -t telegrambot -f TelegramBot/Dockerfile .
