@@ -25,7 +25,7 @@ namespace DotaMetaExplorer.Tests
             return h;
         }
 
-        [Fact]  /* GetTeamByName */
+        [Fact] 
         public async Task GetTeamByName_IsCaseInsensitive()
         {
             var handler = HandlerWithTeams(out _);
@@ -37,7 +37,7 @@ namespace DotaMetaExplorer.Tests
             Assert.Equal(5, team.TeamId);
         }
 
-        [Fact]  /* GetTeamById */
+        [Fact] 
         public async Task GetTeamById_ReturnsTeam()
         {
             var handler = HandlerWithTeams(out _);
@@ -49,7 +49,7 @@ namespace DotaMetaExplorer.Tests
             Assert.Equal("TS", team.Tag);
         }
 
-        [Fact]  /* GetAllTeams */
+        [Fact]
         public async Task GetAllTeams_ReturnsEveryTeam()
         {
             var handler = HandlerWithTeams(out var teams);

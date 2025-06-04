@@ -16,7 +16,6 @@ public class LeaderboardCacheService : BackgroundService
   
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await UpdateLeaderboardCacheAsync();
         while (!stoppingToken.IsCancellationRequested)
         {
             await Task.Delay(TimeSpan.FromHours(24), stoppingToken);

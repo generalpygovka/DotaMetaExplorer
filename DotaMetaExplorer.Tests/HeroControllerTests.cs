@@ -45,7 +45,7 @@ public class HeroControllerTests
         return (new HttpClient(h), heroes);
     }
 
-    [Fact]  /* GetHeroByName */
+    [Fact] 
     public async Task GetByName_ReturnsCaseInsensitiveMatch()
     {
         var (client, _) = HeroClient();
@@ -57,7 +57,7 @@ public class HeroControllerTests
         Assert.Equal(1, hero.Id);
     }
 
-    [Fact]  /* GetAllHeroes */
+    [Fact] 
     public async Task GetAllHeroes_ReturnsFullList()
     {
         var (client, heroes) = HeroClient();
@@ -69,7 +69,7 @@ public class HeroControllerTests
         Assert.Equal(heroes.Count, list.Count);
     }
 
-    [Fact]  /* GetHeroById */
+    [Fact]
     public async Task GetByIdHero_ReturnsCorrectHero()
     {
         var (client, _) = HeroClient();
@@ -81,7 +81,7 @@ public class HeroControllerTests
         Assert.Equal("Drow Ranger", hero.LocalizedName);
     }
 
-    [Fact]  /* GetRandomHero */
+    [Fact] 
     public async Task GetRandomHero_ReturnsHeroFromSet()
     {
         var (client, heroes) = HeroClient();

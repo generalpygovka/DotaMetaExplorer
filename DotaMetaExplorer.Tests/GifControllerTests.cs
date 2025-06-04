@@ -4,7 +4,6 @@ using Xunit;
 using System.Threading.Tasks;
 
 namespace DotaMetaExplorer.Tests;
-[Collection("Sequential")]
 public class GifControllerTests
 {
     [Fact]

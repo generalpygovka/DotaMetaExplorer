@@ -11,11 +11,10 @@ namespace DotaMetaExplorer.Tests
 {
     public class MatchControllerTests
     {
-        [Fact]  /* GetRecentMatches */
+        [Fact] 
         public async Task GetRecentMatches_ReturnsLast10()
         {
             var handler = new StubMessageHandler();
-            // эмулируем 15 матчей:
             var sample = Enumerable.Range(1, 15).Select(i => new ProMatches
             {
                 MatchId = i,
@@ -29,7 +28,6 @@ namespace DotaMetaExplorer.Tests
             var list = Assert.IsType<List<ProMatches>>(actionResult!.Value!);
 
             Assert.Equal(10, list.Count);
-            // проверяем, что взяты первые 10 из sample
             for (int i = 0; i < 10; i++)
                 Assert.Equal(sample[i].MatchId, list[i].MatchId);
         }

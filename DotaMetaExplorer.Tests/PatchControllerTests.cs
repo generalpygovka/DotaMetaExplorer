@@ -23,10 +23,10 @@ namespace DotaMetaExplorer.Tests
                 new() { PatchNumber = "7.37" }
             }
             };
-            // первый запрос: список патчей
+           
             h.RegisterJson("https://www.dota2.com/datafeed/patchnoteslist?language=Ukrainian",
                            patchList);
-            // второй запрос: конкретные notes для версии 7.37
+            
             h.RegisterJson(
                 "https://www.dota2.com/datafeed/patchnotes?language=Ukrainian&version=7.37",
                 new PatchNotes
@@ -39,14 +39,13 @@ namespace DotaMetaExplorer.Tests
             );
             return h;
         }
-        [Fact]  /* GetLatestPatch (Latest) */
+        [Fact]  
         public async Task Latest_EndpointsGivesJson()
         {
             var handler = HandlerForPatches();
             var sut = new PatchController(new HttpClient(handler));
 
             var actionResult = await sut.Latest() as OkObjectResult;
-            // actionResult.Value – это анонимный объект { latest_patch = "7.37" }
             var anon = actionResult!.Value!;
             var prop = anon.GetType().GetProperty("latest_patch");
             Assert.NotNull(prop);
@@ -55,7 +54,7 @@ namespace DotaMetaExplorer.Tests
             Assert.Equal("7.37", patch);
         }
 
-        [Fact]  /* LatestNotes */
+        [Fact]  
         public async Task LatestNotes_ReturnsNotesForLatest()
         {
             var handler = HandlerForPatches();

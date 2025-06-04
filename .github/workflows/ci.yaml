@@ -1,6 +1,6 @@
-# .github/workflows/ci.yml
+# .github/workflows/ci.yaml
 
-name: CI Build & Test
+name: CI Build, Test & Push Docker Images
 
 on:
   push:
@@ -11,12 +11,10 @@ on:
       - master
 
 jobs:
-  build-and-test:
-   
+  build-test-push:
     runs-on: ubuntu-latest
 
     steps:
-     
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -26,33 +24,39 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore 
 
       - name: Build solution
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build --configuration Release --no-restore 
 
       - name: Run all tests
-        run: dotnet test --configuration Release --no-build --verbosity normal
-
-
-      - name: Build Docker image
-        if: success()    
-        run: |
-          docker build \
-            -t dotestry/dotameta:latest \
-            -f DotaMetaExplorer/Dockerfile \
-            .
+        run: dotnet test --configuration Release --no-build --verbosity normal 
 
       - name: Log in to Docker Hub
-        if: success()
-        uses: docker/login-action@v2
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3 
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Push Docker image
-        if: success()
+      - name: Build and push API Docker image (DotaMetaExplorer)
+        if: github.event_name != 'pull_request'
         run: |
-          docker tag dotestry/dotameta:latest dotestry/dotameta:${{ github.sha }}
+          docker build \
+            -t dotestry/dotameta:latest \
+            -t dotestry/dotameta:${{ github.sha }} \
+            -f DotaMetaExplorer/Dockerfile \
+            ./DotaMetaExplorer 
           docker push dotestry/dotameta:latest
           docker push dotestry/dotameta:${{ github.sha }}
+
+      - name: Build and push Telegram Bot Docker image
+        if: github.event_name != 'pull_request'
+        run: |
+          docker build \
+            -t dotestry/dotatelegrambot:latest \
+            -t dotestry/dotatelegrambot:${{ github.sha }} \
+            -f TelegramBot/Dockerfile \
+            .  
+          docker push dotestry/dotatelegrambot:latest
+          docker push dotestry/dotatelegrambot:${{ github.sha }}
