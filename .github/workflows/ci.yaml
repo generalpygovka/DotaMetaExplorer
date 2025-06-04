@@ -1,61 +1,62 @@
-name: CI
+# .github/workflows/ci.yaml
+
+name: CI Build, Test & Push Docker Images
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - master
   pull_request:
-    branches: [ master ]
+    branches:
+      - master
 
 jobs:
-  build-and-test:
+  build-test-push:
     runs-on: ubuntu-latest
 
-    services:
-      mssql:
-        image: mcr.microsoft.com/mssql/server:2022-latest
-        env:
-          SA_PASSWORD: "Your_strong_password123"
-          ACCEPT_EULA: "Y"
-        ports:
-          - 1433:1433
-        options: >-
-          --health-cmd "exit 0"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '8.0.x'
 
-      - name: Wait for SQL Server to be ready
-        run: |
-          for i in {1..30}; do
-            if /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "Your_strong_password123" -Q "SELECT 1" &> /dev/null; then
-              echo "SQL Server is up!"
-              break
-            fi
-            echo "Waiting for SQL Server..."
-            sleep 5
-          done
-
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore 
 
-      - name: Build
-        run: dotnet build --no-restore --configuration Release
+      - name: Build solution
+        run: dotnet build --configuration Release --no-restore 
 
-      - name: Run tests
-        env:
-          ConnectionStrings__DefaultConnection: "Server=localhost,1433;Database=dotameta;User Id=sa;Password=Your_strong_password123;TrustServerCertificate=True"
-        run: dotnet test --no-build --configuration Release --logger trx
+      - name: Run all tests
+        run: dotnet test --configuration Release --no-build --verbosity normal 
 
-      - name: Build Docker images
+      - name: Log in to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3 
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push API Docker image (DotaMetaExplorer)
+        if: github.event_name != 'pull_request'
         run: |
-          docker build -t dotametaexplorer -f DotaMetaExplorer/Dockerfile .
-          docker build -t telegrambot -f TelegramBot/Dockerfile .
+          docker build \
+            -t dotestry/dotameta:latest \
+            -t dotestry/dotameta:${{ github.sha }} \
+            -f DotaMetaExplorer/Dockerfile \
+            ./DotaMetaExplorer 
+          docker push dotestry/dotameta:latest
+          docker push dotestry/dotameta:${{ github.sha }}
+
+      - name: Build and push Telegram Bot Docker image
+        if: github.event_name != 'pull_request'
+        run: |
+          docker build \
+            -t dotestry/dotatelegrambot:latest \
+            -t dotestry/dotatelegrambot:${{ github.sha }} \
+            -f TelegramBot/Dockerfile \
+            .  
+          docker push dotestry/dotatelegrambot:latest
+          docker push dotestry/dotatelegrambot:${{ github.sha }}
