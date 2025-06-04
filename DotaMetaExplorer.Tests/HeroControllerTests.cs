@@ -41,7 +41,7 @@ public class HeroControllerTests
                     PrimaryAttr = "agi", AttackType = "Ranged", Roles = new[] { "Carry" } }
         };
         var h = new StubMessageHandler();
-        h.RegisterJson(Constants.heroesAddress + "?api_key=76b37873-3339-4684-a85b-d67c7605a573", heroes);
+        h.RegisterJson(Constants.heroesAddress, heroes);
         return (new HttpClient(h), heroes);
     }
 

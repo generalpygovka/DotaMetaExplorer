@@ -20,8 +20,8 @@ namespace DotaMetaExplorer.Tests
                     Wins = 9, Losses = 4, LastMatchTime = 0 }
         };
             var h = new StubMessageHandler();
-            h.RegisterJson(Constants.teamsAddress + "?api_key=76b37873-3339-4684-a85b-d67c7605a573", teams);
-            h.RegisterJson("https://api.opendota.com/api/teams/5?api_key=76b37873-3339-4684-a85b-d67c7605a573", teams[0]);
+            h.RegisterJson(Constants.teamsAddress, teams);
+            h.RegisterJson("https://api.opendota.com/api/teams/5", teams[0]);
             return h;
         }
 
