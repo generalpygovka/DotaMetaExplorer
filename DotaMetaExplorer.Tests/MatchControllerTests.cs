@@ -21,7 +21,7 @@ namespace DotaMetaExplorer.Tests
                 Duration = 100,
                 RadiantWin = i % 2 == 0
             }).ToList();
-            handler.RegisterJson(Constants.proMatches + "?api_key=76b37873-3339-4684-a85b-d67c7605a573", sample);
+            handler.RegisterJson(Constants.proMatches + Constants.tokenApi, sample);
 
             var sut = new MatchController(new HttpClient(handler));
             var actionResult = await sut.GetRecentMatches() as OkObjectResult;
