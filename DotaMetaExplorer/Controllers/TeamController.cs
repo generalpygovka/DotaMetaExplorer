@@ -21,7 +21,7 @@ public class TeamController : ControllerBase
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
-            RequestUri = new Uri(_address),
+            RequestUri = new Uri(_address + "?api_key=76b37873-3339-4684-a85b-d67c7605a573"),
         };
         using (var response = await _httpclient.SendAsync(request))
         {
@@ -37,7 +37,7 @@ public class TeamController : ControllerBase
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
-            RequestUri = new Uri($"https://api.opendota.com/api/teams/{id}"),
+            RequestUri = new Uri($"https://api.opendota.com/api/teams/{id}?api_key=76b37873-3339-4684-a85b-d67c7605a573"),
         };
         using (var response = await _httpclient.SendAsync(request))
         {
@@ -53,7 +53,7 @@ public class TeamController : ControllerBase
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
-            RequestUri = new Uri(_address),
+            RequestUri = new Uri(_address + "?api_key=76b37873-3339-4684-a85b-d67c7605a573"),
         };
         using (var response = await _httpclient.SendAsync(request))
         {
