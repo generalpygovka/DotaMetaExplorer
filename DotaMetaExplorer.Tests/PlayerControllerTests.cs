@@ -44,7 +44,7 @@ public class PlayerControllerTests
     public async Task GetPlayers_ReturnsPlayer()
     {
         var handler = new StubMessageHandler();
-        handler.RegisterJson("https://api.opendota.com/api/players/99",
+        handler.RegisterJson("https://api.opendota.com/api/players/99?api_key=76b37873-3339-4684-a85b-d67c7605a573",
                              new Player { RankTier = 7 });
         var (sut, _) = CreateDbAndController(nameof(GetPlayers_ReturnsPlayer));
         typeof(PlayerController)
